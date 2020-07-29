@@ -3,6 +3,7 @@ package insulator.views.main
 import insulator.di.GlobalConfiguration
 import insulator.styles.Controls
 import insulator.styles.Titles
+import insulator.views.common.ICON_CONSUMER_GROUPS
 import insulator.views.common.ICON_MENU_SVG
 import insulator.views.common.ICON_REGISTRY
 import insulator.views.common.ICON_TOPICS
@@ -63,7 +64,7 @@ class MainView : View("Insulator") {
                 boundsInParent
 
                 menuItem("Topics", ICON_TOPICS) { currentViewProperty.set(find<ListTopicView>()) }
-                menuItem("Consumer groups", ICON_TOPICS) { currentViewProperty.set(find<ListConsumerGroupView>()) }
+                menuItem("Consumer groups", ICON_CONSUMER_GROUPS) { currentViewProperty.set(find<ListConsumerGroupView>()) }
                 menuItem("Schema Registry", ICON_REGISTRY) {
                     if (GlobalConfiguration.currentCluster.isSchemaRegistryConfigured()) currentViewProperty.set(find<ListSchemaView>())
                     else alert(Alert.AlertType.WARNING, "Schema registry configuration not found", owner = currentWindow)
