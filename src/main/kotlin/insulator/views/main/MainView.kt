@@ -7,6 +7,7 @@ import insulator.views.common.ICON_MENU_SVG
 import insulator.views.common.ICON_REGISTRY
 import insulator.views.common.ICON_TOPICS
 import insulator.views.configurations.ListClusterView
+import insulator.views.main.consumergroup.ListConsumerGroupView
 import insulator.views.main.schemaregistry.ListSchemaView
 import insulator.views.main.topic.ListTopicView
 import javafx.beans.property.SimpleBooleanProperty
@@ -62,6 +63,7 @@ class MainView : View("Insulator") {
                 boundsInParent
 
                 menuItem("Topics", ICON_TOPICS) { currentViewProperty.set(find<ListTopicView>()) }
+                menuItem("Consumer groups", ICON_TOPICS) { currentViewProperty.set(find<ListConsumerGroupView>()) }
                 menuItem("Schema Registry", ICON_REGISTRY) {
                     if (GlobalConfiguration.currentCluster.isSchemaRegistryConfigured()) currentViewProperty.set(find<ListSchemaView>())
                     else alert(Alert.AlertType.WARNING, "Schema registry configuration not found", owner = currentWindow)

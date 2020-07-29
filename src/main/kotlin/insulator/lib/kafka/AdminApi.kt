@@ -29,5 +29,8 @@ class AdminApi(private val admin: AdminClient, private val consumer: Consumer<An
                 }
             }
 
+    fun listConsumerGroups() = admin.listConsumerGroups().all().toCompletableFuture()
+        .map { consumerGroup -> consumerGroup.map { it.groupId() } }
+
     private fun TopicDescription.toTopicPartitions() = this.partitions().map { TopicPartition(this.name(), it.partition()) }
 }
