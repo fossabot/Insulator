@@ -1,11 +1,17 @@
 package insulator.lib.kafka
 
+import arrow.core.Either
+import arrow.core.extensions.fx
 import insulator.lib.helpers.map
 import insulator.lib.helpers.toCompletableFuture
+import insulator.lib.kafka.model.ConsumerGroup
+import insulator.lib.kafka.model.ConsumerGroupMember
 import insulator.lib.kafka.model.Topic
+import insulator.lib.kafka.model.TopicPartitionLag
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.TopicDescription
 import org.apache.kafka.clients.consumer.Consumer
+import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 
 class AdminApi(private val admin: AdminClient, private val consumer: Consumer<Any, Any>) {
@@ -31,6 +37,30 @@ class AdminApi(private val admin: AdminClient, private val consumer: Consumer<An
 
     fun listConsumerGroups() = admin.listConsumerGroups().all().toCompletableFuture()
         .map { consumerGroup -> consumerGroup.map { it.groupId() } }
+
+    fun describeConsumerGroup(groupId: String) =
+        admin.listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata().toCompletableFuture()
+            .thenCombineAsync(admin.describeConsumerGroups(listOf(groupId)).all().toCompletableFuture().map { it.values.first() }) { partitionToOffset, description ->
+                Either.fx<Throwable, ConsumerGroup> {
+                    ConsumerGroup(
+                        (!description).groupId(),
+                        (!description).state(),
+                        (!description).members().map {
+                            ConsumerGroupMember(
+                                it.clientId(),
+                                it.assignment().topicPartitions().map { tp -> TopicPartitionLag(tp.topic(), tp.partition(), getLag(tp, (!partitionToOffset)[tp])) }
+                            )
+                        }
+                    )
+                }
+            }
+
+    private fun getLag(partition: TopicPartition, currentOffset: OffsetAndMetadata?) =
+        consumer.endOffsets(mutableListOf(partition)).values.first() - (currentOffset?.offset() ?: 0)
+
+//    fun alterConsumerGroupOffset(consumerGroupId: String) =
+//        admin.listConsumerGroupOffsets("123").partitionsToOffsetAndMetadata()
+//        admin.alterConsumerGroupOffsets(consumerGroupId, mapOf(TopicPartition("name", 1) to OffsetAndMetadata()))
 
     private fun TopicDescription.toTopicPartitions() = this.partitions().map { TopicPartition(this.name(), it.partition()) }
 }
